@@ -1,0 +1,58 @@
+name: Build and release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { GOOS: linux, GOARCH: amd64 }
+          - { GOOS: linux, GOARCH: arm64 }
+          - { GOOS: darwin, GOARCH: amd64 }
+          - { GOOS: darwin, GOARCH: arm64 }
+          - { GOOS: windows, GOARCH: amd64 }
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version: "1.22.x"
+
+      - name: Install dependencies
+        run: go get .
+
+      - name: Build binaries
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.GOOS }}
+          GOARCH: ${{ matrix.GOARCH }}
+        run: |
+          VERSION="$(git describe --tags)"
+          DIR="$(mktemp -d)"
+          mkdir "$DIR/sum"
+          go build -trimpath -ldflags="-s -w" -o "$DIR/sum"
+          cp LICENSE "$DIR/sum"
+          cp README.md "$DIR/sum"
+          if [ "$GOOS" == "windows" ]; then
+            (cd "$DIR"; zip "sum.zip" -r sum)
+            mv "$DIR/sum.zip" "sum-$VERSION-$GOOS-$GOARCH.zip"
+          else
+            tar -cvzf "sum-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" sum
+          fi
+          if [ "$GOOS" == "darwin" ]; then
+            mv sum-$VERSION-darwin-$GOARCH.tar.gz sum-$VERSION-macOS-$GOARCH.tar.gz
+          fi
+
+      - name: Attach binaries
+        uses: softprops/action-gh-release@a74c6b72af54cfa997e81df42d94703d6313a2d0 # v2.0.6
+        with:
+          files: |
+            ./sum-*
