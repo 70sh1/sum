@@ -51,7 +51,6 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(len(args))
 	for _, path := range args {
-		path := path // Not needed for Go >= 1.22
 		go func() {
 			defer wg.Done()
 			sum, err := calcHash(path, mode(*m))
