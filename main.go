@@ -111,10 +111,10 @@ func mUsage() string {
 }
 
 func usage() {
-	errout.Println()
-	errout.Println("Arguments: [PATH]... Files to hash")
-	errout.Println()
-	errout.Println("OPTIONS:")
-	output.Printf("  -m  %s \n", mUsage())
-	errout.Println()
+	errout.Printf(`
+Arguments: [PATH]... Files to hash
+	
+Options:
+  -m  %s
+	`, mUsage())
 }
