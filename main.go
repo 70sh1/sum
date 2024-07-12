@@ -21,6 +21,8 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
+const version = "0.1.1"
+
 type mode string
 
 const (
@@ -40,6 +42,11 @@ var (
 
 func main() {
 	m := flag.String("m", string(SHA256), mUsage())
+	flag.BoolFunc("v", vUsage(), func(s string) error {
+		fmt.Println(version)
+		os.Exit(0)
+		return nil
+	})
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
@@ -108,6 +115,10 @@ func mUsage() string {
 		result.WriteString(s)
 	}
 	return result.String()
+}
+
+func vUsage() string {
+	return "print current version and exit"
 }
 
 func usage() {
