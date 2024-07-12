@@ -109,7 +109,7 @@ func calcHash(path string, mode mode) ([]byte, error) {
 
 func mUsage() string {
 	var result strings.Builder
-	result.WriteString("specify hashing algorithm:")
+	result.WriteString("specify hash function:")
 	for _, s := range []string{"sha256 (default)", "sha512", "blake2b", "blake3", "sha1 (not recommended)", "md5 (not recommended)"} {
 		result.WriteString("\n\t")
 		result.WriteString(s)
@@ -127,5 +127,7 @@ Arguments: [PATH]... Files to hash
 	
 Options:
   -m  %s
-	`, mUsage())
+
+  -v  %s
+	`, mUsage(), vUsage())
 }
