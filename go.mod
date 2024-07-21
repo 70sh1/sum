@@ -1,4 +1,4 @@
-module sum
+module github.com/70sh1/sum
 
 go 1.22.0
 
