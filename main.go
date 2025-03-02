@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/zeebo/blake3"
+	"github.com/zeebo/xxh3"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -28,9 +29,10 @@ type mode string
 const (
 	SHA256  mode = "sha256"
 	SHA512  mode = "sha512"
+	SHA1    mode = "sha1"
 	BLAKE2B mode = "blake2b"
 	BLAKE3  mode = "blake3" // ⚡
-	SHA1    mode = "sha1"
+	XXH3    mode = "xxh3"   // ⚡
 	MD5     mode = "md5"
 )
 
@@ -167,6 +169,8 @@ func getHashFunction(m mode) (hash.Hash, error) {
 		return blake3.New(), nil
 	case BLAKE2B:
 		return blake2b.New(32, nil)
+	case XXH3:
+		return xxh3.New(), nil
 
 	default:
 		return nil, fmt.Errorf("unknown mode: '%s'", m)
@@ -176,7 +180,7 @@ func getHashFunction(m mode) (hash.Hash, error) {
 func mUsage() string {
 	var result strings.Builder
 	result.WriteString("specify hash function:")
-	for _, s := range []string{"sha256 (default)", "sha512", "blake2b", "blake3", "sha1 (not recommended)", "md5 (not recommended)"} {
+	for _, s := range []string{"sha256 (default)", "sha512", "sha1", "blake2b", "blake3", "xxh3", "md5"} {
 		result.WriteString("\n\t")
 		result.WriteString(s)
 	}
