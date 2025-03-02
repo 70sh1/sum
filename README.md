@@ -20,6 +20,7 @@ Currently supported:
 | `sha1`    | not recommended |
 | `md5`     | not recommended |
 
+`-u` - calculate union hash (sum of multiple files combined).
 
 ### Examples
 #### Input

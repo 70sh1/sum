@@ -42,12 +42,15 @@ var (
 
 func main() {
 	m := flag.String("m", string(SHA256), mUsage())
+	u := flag.Bool("u", false, uUsage())
+
 	flag.BoolFunc("v", vUsage(), func(s string) error {
 		fmt.Println(version)
 		os.Exit(0)
 		return nil
 	})
 	flag.Usage = usage
+
 	flag.Parse()
 	args := flag.Args()
 	if len(args) < 1 {
@@ -55,12 +58,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *u {
+		sum, err := unionHash(args, mode(*m))
+		if err != nil {
+			errout.Println(err)
+			return
+		}
+		sumHex := hex.EncodeToString(sum)
+		output.Println(sumHex, fmt.Sprintf("(%d files)", len(args)))
+		return
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(args))
 	for _, path := range args {
 		go func() {
 			defer wg.Done()
-			sum, err := calcHash(path, mode(*m))
+			sum, err := individualHash(path, mode(*m))
 			if err != nil {
 				errout.Println(err)
 				return
@@ -72,39 +86,64 @@ func main() {
 	wg.Wait()
 }
 
-func calcHash(path string, mode mode) ([]byte, error) {
+func individualHash(path string, m mode) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var hash hash.Hash
-	switch mode {
-	case SHA512:
-		hash = sha512.New()
-	case SHA256:
-		hash = sha256.New()
-	case SHA1:
-		hash = sha1.New()
-	case MD5:
-		hash = md5.New()
-	case BLAKE3:
-		hash = blake3.New()
-	case BLAKE2B:
-		hash, err = blake2b.New(32, nil)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("unknown mode: '%s'", mode)
-	}
-
-	if _, err := io.Copy(hash, file); err != nil {
+	h, err := getHashFunction(m)
+	if err != nil {
 		return nil, err
 	}
 
-	return hash.Sum(nil), nil
+	if _, err := io.Copy(h, file); err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
+}
+
+func unionHash(paths []string, m mode) ([]byte, error) {
+	h, err := getHashFunction(m)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, path := range paths {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		if _, err := io.Copy(h, file); err != nil {
+			return nil, err
+		}
+	}
+
+	return h.Sum(nil), nil
+}
+
+func getHashFunction(m mode) (hash.Hash, error) {
+	switch mode(m) {
+	case SHA512:
+		return sha512.New(), nil
+	case SHA256:
+		return sha256.New(), nil
+	case SHA1:
+		return sha1.New(), nil
+	case MD5:
+		return md5.New(), nil
+	case BLAKE3:
+		return blake3.New(), nil
+	case BLAKE2B:
+		return blake2b.New(32, nil)
+
+	default:
+		return nil, fmt.Errorf("unknown mode: '%s'", m)
+	}
 }
 
 func mUsage() string {
@@ -115,6 +154,10 @@ func mUsage() string {
 		result.WriteString(s)
 	}
 	return result.String()
+}
+
+func uUsage() string {
+	return "calculate union hash (a+b+c...) instead of individual files"
 }
 
 func vUsage() string {
@@ -128,6 +171,9 @@ Arguments: [PATH]... Files to hash
 Options:
   -m  %s
 
+  -u  %s
+
   -v  %s
-	`, mUsage(), vUsage())
+`,
+		mUsage(), uUsage(), vUsage())
 }
