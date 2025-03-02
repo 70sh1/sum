@@ -24,7 +24,7 @@ import (
 
 const version = "0.2.0"
 
-type mode string
+type mode = string
 
 const (
 	SHA256  mode = "sha256"
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	if *u {
-		sum, err := unionHash(paths, mode(*m))
+		sum, err := unionHash(paths, *m)
 		if err != nil {
 			errout.Println(err)
 			return
@@ -93,7 +93,7 @@ func main() {
 	for i, path := range paths {
 		go func() {
 			defer wg.Done()
-			sum, err := individualHash(path, mode(*m))
+			sum, err := individualHash(path, *m)
 			if err != nil {
 				errout.Println(err)
 				return
@@ -156,7 +156,7 @@ func unionHash(paths []string, m mode) ([]byte, error) {
 }
 
 func getHashFunction(m mode) (hash.Hash, error) {
-	switch mode(m) {
+	switch m {
 	case SHA512:
 		return sha512.New(), nil
 	case SHA256:
@@ -180,7 +180,7 @@ func getHashFunction(m mode) (hash.Hash, error) {
 func mUsage() string {
 	var result strings.Builder
 	result.WriteString("specify hash function:")
-	for _, s := range []string{"sha256 (default)", "sha512", "sha1", "blake2b", "blake3", "xxh3", "md5"} {
+	for _, s := range []mode{SHA256 + " (default)", SHA512, SHA1, BLAKE2B, BLAKE3, XXH3, MD5} {
 		result.WriteString("\n\t")
 		result.WriteString(s)
 	}
@@ -205,6 +205,7 @@ Options:
   -u  %s
 
   -v  %s
+
 `,
 		mUsage(), uUsage(), vUsage())
 }
