@@ -86,7 +86,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(len(paths))
-	for _, path := range paths {
+	var mu sync.Mutex
+	result := make([]string, len(paths))
+	for i, path := range paths {
 		go func() {
 			defer wg.Done()
 			sum, err := individualHash(path, mode(*m))
@@ -95,10 +97,20 @@ func main() {
 				return
 			}
 			sumHex := hex.EncodeToString(sum)
-			output.Println(sumHex, filepath.Base(path))
+
+			mu.Lock()
+			result[i] = fmt.Sprintf("%s %s\n", sumHex, filepath.Base(path))
+			mu.Unlock()
 		}()
 	}
 	wg.Wait()
+
+	var concat strings.Builder
+	for _, s := range result {
+		concat.WriteString(s)
+	}
+
+	output.Println(concat.String())
 }
 
 func individualHash(path string, m mode) ([]byte, error) {
