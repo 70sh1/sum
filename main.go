@@ -58,20 +58,35 @@ func main() {
 		os.Exit(1)
 	}
 
+	var paths []string
+
+	for _, v := range args {
+		p, err := filepath.Glob(v)
+		if err != nil {
+			errout.Println(err)
+		}
+		for _, pv := range p {
+			if info, err := os.Stat(pv); err != nil || info.IsDir() {
+				continue
+			}
+			paths = append(paths, pv)
+		}
+	}
+
 	if *u {
-		sum, err := unionHash(args, mode(*m))
+		sum, err := unionHash(paths, mode(*m))
 		if err != nil {
 			errout.Println(err)
 			return
 		}
 		sumHex := hex.EncodeToString(sum)
-		output.Println(sumHex, fmt.Sprintf("(%d files)", len(args)))
+		output.Println(sumHex, fmt.Sprintf("(%d files)", len(paths)))
 		return
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(args))
-	for _, path := range args {
+	wg.Add(len(paths))
+	for _, path := range paths {
 		go func() {
 			defer wg.Done()
 			sum, err := individualHash(path, mode(*m))
