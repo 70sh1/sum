@@ -66,5 +66,6 @@ go install github.com/70sh1/sum@latest
 
 ## Acknowledgements
 [zeebo/blake3](https://github.com/zeebo/blake3) - blake3 implementation.
+
 [zeebo/xxh3](https://github.com/zeebo/xxh3) - xxh3 implementation.
 
