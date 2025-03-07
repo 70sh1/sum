@@ -61,18 +61,30 @@ func main() {
 	}
 
 	var paths []string
-
-	for _, v := range args {
-		p, err := filepath.Glob(v)
+	var pathErrors []string
+	for _, path := range args {
+		path = filepath.Clean(path)
+		globPaths, err := filepath.Glob(path)
 		if err != nil {
 			errout.Println(err)
 		}
-		for _, pv := range p {
-			if info, err := os.Stat(pv); err != nil || info.IsDir() {
+		if globPaths == nil {
+			pathErrors = append(pathErrors, "file not found "+path)
+			continue
+		}
+		for _, gp := range globPaths {
+			if info, err := os.Stat(gp); err != nil || info.IsDir() {
 				continue
 			}
-			paths = append(paths, pv)
+			paths = append(paths, gp)
 		}
+	}
+	for _, e := range pathErrors {
+		output.Println(e)
+	}
+
+	if len(paths) == 0 {
+		return
 	}
 
 	if *u {
@@ -89,7 +101,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(len(paths))
 	var mu sync.Mutex
-	result := make([]string, len(paths))
+	sums := make([]string, len(paths))
 	for i, path := range paths {
 		go func() {
 			defer wg.Done()
@@ -101,18 +113,21 @@ func main() {
 			sumHex := hex.EncodeToString(sum)
 
 			mu.Lock()
-			result[i] = fmt.Sprintf("%s %s\n", sumHex, filepath.Base(path))
+			sums[i] = fmt.Sprintf("%s %s", sumHex, filepath.Base(path))
 			mu.Unlock()
 		}()
 	}
 	wg.Wait()
 
-	var concat strings.Builder
-	for _, s := range result {
-		concat.WriteString(s)
+	var result strings.Builder
+	for i, s := range sums {
+		result.WriteString(s)
+		if i != len(sums)-1 {
+			result.WriteString("\n")
+		}
 	}
 
-	output.Println(concat.String())
+	output.Println(result.String())
 }
 
 func individualHash(path string, m mode) ([]byte, error) {
