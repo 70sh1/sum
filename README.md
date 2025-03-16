@@ -24,33 +24,20 @@ Currently supported:
 `-u` - calculate union hash (sum of multiple files combined).
 
 ### Examples
-#### Input
-```
+```bash
 sum data.txt
-```
-```
+# aa3ec16e6acc809d8b2818662276256abfd2f1b441cb51574933f3d4bd115d11 data.txt
+
 sum -m blake3 data.txt
-```
-```
+# c7a4b65f79934d742ea07a9e85b3bbb1ab9ad9f42033d8a0698495d0f564c804 data.txt
+
 sum -m md5 data.txt file2.png bin.exe
-```
-```
+# 764569e58f53ea8b6404f6fa7fc0247f data.txt
+# 79695d7d0054d14d68b513ed997f7946 file2.png
+# 65e3dd724be2affbda44084e213ea63a bin.exe
+
 sum -m xxh3 -u data.txt file2.png bin.exe
-```
-#### Output
-```
-aa3ec16e6acc809d8b2818662276256abfd2f1b441cb51574933f3d4bd115d11 data.txt
-```
-```
-c7a4b65f79934d742ea07a9e85b3bbb1ab9ad9f42033d8a0698495d0f564c804 data.txt
-```
-```
-764569e58f53ea8b6404f6fa7fc0247f data.txt
-79695d7d0054d14d68b513ed997f7946 file2.png
-65e3dd724be2affbda44084e213ea63a bin.exe
-```
-```
-cef94edd97ad53f0 (3 files)
+# cef94edd97ad53f0 (3 files)
 ```
 
 ## Installation
