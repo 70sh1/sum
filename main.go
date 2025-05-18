@@ -22,7 +22,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-const version = "0.2.2"
+const version = "0.3.0"
 
 type mode = string
 
