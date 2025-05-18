@@ -94,14 +94,16 @@ func main() {
 			return
 		}
 		sumHex := hex.EncodeToString(sum)
-		output.Println(sumHex, fmt.Sprintf("(%d files)", len(paths)))
+		output.Printf("%s  (%d files)", sumHex, len(paths))
 		return
 	}
 
-	var wg sync.WaitGroup
+	var (
+		wg   sync.WaitGroup
+		mu   sync.Mutex
+		sums = make([]string, len(paths))
+	)
 	wg.Add(len(paths))
-	var mu sync.Mutex
-	sums := make([]string, len(paths))
 	for i, path := range paths {
 		go func() {
 			defer wg.Done()
@@ -113,7 +115,7 @@ func main() {
 			sumHex := hex.EncodeToString(sum)
 
 			mu.Lock()
-			sums[i] = fmt.Sprintf("%s %s", sumHex, filepath.Base(path))
+			sums[i] = fmt.Sprintf("%s  %s", sumHex, filepath.Base(path))
 			mu.Unlock()
 		}()
 	}
