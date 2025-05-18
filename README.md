@@ -7,7 +7,10 @@
 </p>
 
 _sum_ is a minimal and concurrent CLI file hashing tool.
-
+### Features
+* Simple.
+* Concurrent file processing - each file is processed in its own goroutine (thread).
+* Ability to calculate union (composite) checksum.
 ### Flags
 `-m` - specify hash function.
 
@@ -41,14 +44,17 @@ sum -m xxh3 -u data.txt file2.png bin.exe
 ```
 
 ## Installation
-Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/eddy/releases) page for the desired OS.
+The following install options are available:
 
----
+#### Prebuilt binaries (releases)
+Prebuilt binaries are available for **Windows, Linux, and macOS (both x86 and ARM)**: download the latest release from the [releases](https://github.com/70sh1/sum/releases) page for the desired OS.
 
+#### via Go
 If you have [Go](https://go.dev/dl/) installed, the simplest way to get _sum_ is to run:
 ```shell
 go install github.com/70sh1/sum@latest
 ```
+> [!IMPORTANT] 
 > If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
 ## Acknowledgements
