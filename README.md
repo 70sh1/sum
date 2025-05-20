@@ -54,6 +54,20 @@ If you have [Go](https://go.dev/dl/) installed, the simplest way to get _sum_ is
 ```shell
 go install github.com/70sh1/sum@latest
 ```
+#### Scoop
+_sum_ is available as a part of [70sh1's scoop bucket](https://github.com/70sh1/jug). To install, you first need to add the bucket:
+```
+scoop bucket add jug https://github.com/70sh1/jug
+```
+After that, run:
+```
+scoop install sum
+```
+Alternatively, if you don't want to add the bucket, you can run this:
+```
+scoop install https://raw.githubusercontent.com/70sh1/jug/refs/heads/master/bucket/sum.json
+```
+
 > [!IMPORTANT] 
 > If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
