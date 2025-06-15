@@ -7,10 +7,13 @@
 </p>
 
 _sum_ is a minimal and concurrent CLI file hashing tool.
+
 ### Features
 * Simple.
 * Concurrent file processing - each file is processed in its own goroutine (thread).
 * Ability to calculate union (composite) checksum.
+* Glob patterns support.
+
 ### Flags
 `-m` - specify hash function.
 
@@ -41,6 +44,9 @@ sum -m md5 data.txt file2.png bin.exe
 
 sum -m xxh3 -u data.txt file2.png bin.exe
 # cef94edd97ad53f0 (3 files)
+
+sum -u ./*
+# 725c4620f52355d3760e1382565cbb5e6033e8eece68a92ee68affd534053751  (5 files)
 ```
 
 ## Installation
@@ -68,11 +74,10 @@ Alternatively, if you don't want to add the bucket, you can run this:
 scoop install https://raw.githubusercontent.com/70sh1/jug/refs/heads/master/bucket/sum.json
 ```
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > If you are on Linux and using this method, make sure that go bin path is added to your PATH environment variable: e.g. `export PATH=$PATH:$HOME/go/bin`
 
 ## Acknowledgements
 [zeebo/blake3](https://github.com/zeebo/blake3) - blake3 implementation.
 
 [zeebo/xxh3](https://github.com/zeebo/xxh3) - xxh3 implementation.
-
