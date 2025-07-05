@@ -18,16 +18,17 @@ _sum_ is a minimal and concurrent CLI file hashing tool.
 `-m` - specify hash function.
 
 Currently supported:
-| `sha256`  | default                       |
-| --------- | ----------------------------- |
-| `sha512`  | -                             |
-| `sha1`    | -                             |
-| `blake2b` | -                             |
-| `blake3`  | modern & fast                 |
-| `xxh3`    | non-cryptographic & very fast |
-| `md5`     | -                             |
+| `sha256`                                 | default                       |
+| ---------------------------------------- | ----------------------------- |
+| `sha512`                                 | -                             |
+| `sha1`                                   | -                             |
+| `sha3-224, sha3-256, sha3-384, sha3-512` | -                             |
+| `blake2b`                                | -                             |
+| `blake3`                                 | modern & fast                 |
+| `xxh3`                                   | non-cryptographic & very fast |
+| `md5`                                    | -                             |
 
-`-u` - calculate union hash (sum of multiple files combined).
+`-u` - calculate union (composite) hash - a sum of multiple files combined.
 
 ### Examples
 ```bash
