@@ -4,11 +4,13 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha3"
 	"crypto/sha512"
 	"encoding/hex"
 	"flag"
 	"fmt"
 	"hash"
+	"hash/crc32"
 	"io"
 	"log"
 	"os"
@@ -27,13 +29,23 @@ const version = "0.3.0"
 type mode = string
 
 const (
-	SHA256  mode = "sha256"
-	SHA512  mode = "sha512"
-	SHA1    mode = "sha1"
+	SHA256 mode = "sha256"
+	SHA512 mode = "sha512"
+	SHA1   mode = "sha1"
+
+	SHA3_224 mode = "sha3-224"
+	SHA3_256 mode = "sha3-256"
+	SHA3_384 mode = "sha3-384"
+	SHA3_512 mode = "sha3-512"
+
 	BLAKE2B mode = "blake2b"
 	BLAKE3  mode = "blake3" // ⚡
-	XXH3    mode = "xxh3"   // ⚡
-	MD5     mode = "md5"
+
+	CRC32 mode = "crc32"
+
+	XXH3 mode = "xxh3" // ⚡⚡
+
+	MD5 mode = "md5"
 )
 
 // Thread safe output
@@ -43,7 +55,7 @@ var (
 )
 
 func main() {
-	m := flag.String("m", string(SHA256), mUsage())
+	m := flag.String("m", SHA256, mUsage())
 	u := flag.Bool("u", false, uUsage())
 
 	flag.BoolFunc("v", vUsage(), func(s string) error {
@@ -180,12 +192,26 @@ func getHashFunction(m mode) (hash.Hash, error) {
 		return sha256.New(), nil
 	case SHA1:
 		return sha1.New(), nil
+
+	case SHA3_224:
+		return sha3.New224(), nil
+	case SHA3_256:
+		return sha3.New256(), nil
+	case SHA3_384:
+		return sha3.New384(), nil
+	case SHA3_512:
+		return sha3.New512(), nil
+
+	case CRC32:
+		return crc32.NewIEEE(), nil
+
 	case MD5:
 		return md5.New(), nil
 	case BLAKE3:
 		return blake3.New(), nil
 	case BLAKE2B:
 		return blake2b.New(32, nil)
+
 	case XXH3:
 		return xxh3.New(), nil
 
@@ -215,7 +241,7 @@ func vUsage() string {
 func usage() {
 	errout.Printf(`
 Arguments: [PATH]... Files to hash
-	
+
 Options:
   -m  %s
 
