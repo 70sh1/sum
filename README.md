@@ -26,6 +26,7 @@ Currently supported:
 | `blake2b`                                | -                             |
 | `blake3`                                 | modern & fast                 |
 | `xxh3`                                   | non-cryptographic & very fast |
+| `crc32`                                  | -                             |
 | `md5`                                    | -                             |
 
 `-u` - calculate union (composite) hash - a sum of multiple files combined.
