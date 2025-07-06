@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/hmac"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -57,6 +58,7 @@ var (
 func main() {
 	m := flag.String("m", SHA256, mUsage())
 	u := flag.Bool("u", false, uUsage())
+	key := flag.String("k", "", kUsage())
 
 	flag.BoolFunc("v", vUsage(), func(s string) error {
 		fmt.Println(version)
@@ -100,7 +102,7 @@ func main() {
 	}
 
 	if *u {
-		sum, err := unionHash(paths, *m)
+		sum, err := unionHash(paths, *m, *key)
 		if err != nil {
 			errout.Println(err)
 			return
@@ -119,7 +121,7 @@ func main() {
 	for i, path := range paths {
 		go func() {
 			defer wg.Done()
-			sum, err := individualHash(path, *m)
+			sum, err := individualHash(path, *m, *key)
 			if err != nil {
 				errout.Println(err)
 				return
@@ -144,14 +146,14 @@ func main() {
 	output.Println(result.String())
 }
 
-func individualHash(path string, m mode) ([]byte, error) {
+func individualHash(path string, m mode, key string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	h, err := getHashFunction(m)
+	h, err := newHashFunction(m, key)
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +165,8 @@ func individualHash(path string, m mode) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func unionHash(paths []string, m mode) ([]byte, error) {
-	h, err := getHashFunction(m)
+func unionHash(paths []string, m mode, key string) ([]byte, error) {
+	h, err := newHashFunction(m, key)
 	if err != nil {
 		return nil, err
 	}
@@ -184,33 +186,40 @@ func unionHash(paths []string, m mode) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func getHashFunction(m mode) (hash.Hash, error) {
+func newHash(m mode, key string) (hash.Hash, error) {
+	hmacKey := []byte(key)
+
+	var h func() hash.Hash
+
 	switch m {
 	case SHA512:
-		return sha512.New(), nil
+		h = sha512.New
 	case SHA256:
-		return sha256.New(), nil
+		h = sha256.New
 	case SHA1:
-		return sha1.New(), nil
+		h = sha1.New
 
 	case SHA3_224:
-		return sha3.New224(), nil
+		h = func() hash.Hash { return sha3.New224() }
 	case SHA3_256:
-		return sha3.New256(), nil
+		h = func() hash.Hash { return sha3.New256() }
 	case SHA3_384:
-		return sha3.New384(), nil
+		h = func() hash.Hash { return sha3.New384() }
 	case SHA3_512:
-		return sha3.New512(), nil
+		h = func() hash.Hash { return sha3.New512() }
 
 	case CRC32:
-		return crc32.NewIEEE(), nil
+		h = func() hash.Hash { return crc32.NewIEEE() }
 
 	case MD5:
-		return md5.New(), nil
+		h = md5.New
 	case BLAKE3:
+		if hmacKey != nil {
+			return blake3.NewKeyed(hmacKey)
+		}
 		return blake3.New(), nil
 	case BLAKE2B:
-		return blake2b.New(32, nil)
+		return blake2b.New(32, hmacKey)
 
 	case XXH3:
 		return xxh3.New(), nil
@@ -218,6 +227,11 @@ func getHashFunction(m mode) (hash.Hash, error) {
 	default:
 		return nil, fmt.Errorf("unknown mode: '%s'", m)
 	}
+
+	if hmacKey != nil {
+		return hmac.New(h, hmacKey), nil
+	}
+	return h(), nil
 }
 
 func mUsage() string {
@@ -234,6 +248,10 @@ func uUsage() string {
 	return "calculate union hash (a+b+c...) instead of individual files"
 }
 
+func kUsage() string {
+	return "switch to hmac mode and use the provided key"
+}
+
 func vUsage() string {
 	return "print current version and exit"
 }
@@ -247,8 +265,10 @@ Options:
 
   -u  %s
 
+  -k  %s
+
   -v  %s
 
 `,
-		mUsage(), uUsage(), vUsage())
+		mUsage(), uUsage(), kUsage(), vUsage())
 }

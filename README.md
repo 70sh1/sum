@@ -6,12 +6,13 @@
   <a href="https://github.com/70sh1/sum/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
 </p>
 
-_sum_ is a minimal and concurrent CLI file hashing tool.
+_sum_ is a simple and concurrent CLI file hashing tool.
 
 ### Features
 * Simple.
 * Concurrent file processing - each file is processed in its own goroutine (thread).
 * Ability to calculate union (composite) checksum.
+* HMAC (keyed hash) support.
 * Glob patterns support.
 
 ### Flags
@@ -30,6 +31,8 @@ Currently supported:
 | `md5`                                    | -                             |
 
 `-u` - calculate union (composite) hash - a sum of multiple files combined.
+
+`-k` - switch to hmac mode and use the provided key.
 
 ### Examples
 ```bash
