@@ -153,7 +153,7 @@ func individualHash(path string, m mode, key string) ([]byte, error) {
 	}
 	defer file.Close()
 
-	h, err := newHashFunction(m, key)
+	h, err := newHash(m, key)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func individualHash(path string, m mode, key string) ([]byte, error) {
 }
 
 func unionHash(paths []string, m mode, key string) ([]byte, error) {
-	h, err := newHashFunction(m, key)
+	h, err := newHash(m, key)
 	if err != nil {
 		return nil, err
 	}
