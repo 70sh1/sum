@@ -8,7 +8,6 @@ import (
 	"crypto/sha3"
 	"crypto/sha512"
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"hash"
 	"hash/crc32"
@@ -19,6 +18,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/pflag"
 	"github.com/zeebo/blake3"
 	"github.com/zeebo/xxh3"
 
@@ -56,21 +56,25 @@ var (
 )
 
 func main() {
-	m := flag.String("m", SHA256, mUsage())
-	u := flag.Bool("u", false, uUsage())
-	key := flag.String("k", "", kUsage())
+	m := pflag.StringP("mode", "m", SHA256, modesUsage())
+	u := pflag.BoolP("union", "u", false, "calculate union hash (a+b+c...) instead of individual files")
+	key := pflag.StringP("hmac-key", "k", "", "switch to hmac mode and use the provided key")
 
-	flag.BoolFunc("v", vUsage(), func(s string) error {
+	pflag.BoolFuncP("version", "v", "print current version and exit", func(s string) error {
 		fmt.Println(version)
 		os.Exit(0)
 		return nil
 	})
-	flag.Usage = usage
 
-	flag.Parse()
-	args := flag.Args()
+	// pflag.Usage = func() { errout.Println(pflag.CommandLine.FlagUsagesWrapped(5)) }
+	pflag.Usage = func() {
+		errout.Printf("Usage: %s [options] [paths]\nOptions:\n%s", os.Args[0], pflag.CommandLine.FlagUsages())
+	}
+	pflag.Parse()
+
+	args := pflag.Args()
 	if len(args) < 1 {
-		usage()
+		pflag.Usage()
 		os.Exit(1)
 	}
 
@@ -234,7 +238,7 @@ func newHash(m mode, key string) (hash.Hash, error) {
 	return h(), nil
 }
 
-func mUsage() string {
+func modesUsage() string {
 	var result strings.Builder
 	result.WriteString("specify hash function:")
 	for _, s := range []mode{SHA256 + " (default)", SHA512, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, BLAKE2B, BLAKE3, CRC32, XXH3, MD5} {
@@ -242,33 +246,4 @@ func mUsage() string {
 		result.WriteString(s)
 	}
 	return result.String()
-}
-
-func uUsage() string {
-	return "calculate union hash (a+b+c...) instead of individual files"
-}
-
-func kUsage() string {
-	return "switch to hmac mode and use the provided key"
-}
-
-func vUsage() string {
-	return "print current version and exit"
-}
-
-func usage() {
-	errout.Printf(`
-Arguments: [PATH]... Files to hash
-
-Options:
-  -m  %s
-
-  -u  %s
-
-  -k  %s
-
-  -v  %s
-
-`,
-		mUsage(), uUsage(), kUsage(), vUsage())
 }
