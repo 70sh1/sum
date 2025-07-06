@@ -244,9 +244,10 @@ func newHash(m mode, key string) (hash.Hash, error) {
 func modesUsage() string {
 	var result strings.Builder
 	result.WriteString("specify hash function:")
-	for _, s := range []mode{SHA256 + " (default)", SHA512, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, BLAKE2B, BLAKE3, CRC32, XXH3, MD5} {
+	for _, s := range []mode{SHA256, SHA512, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, BLAKE2B, BLAKE3, CRC32, XXH3, MD5} {
 		result.WriteString("\n\t")
 		result.WriteString(s)
 	}
+	result.WriteString("\n")
 	return result.String()
 }
