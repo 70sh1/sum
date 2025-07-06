@@ -191,7 +191,10 @@ func unionHash(paths []string, m mode, key string) ([]byte, error) {
 }
 
 func newHash(m mode, key string) (hash.Hash, error) {
-	hmacKey := []byte(key)
+	var hmacKey []byte
+	if len(key) > 0 {
+		hmacKey = []byte(key)
+	}
 
 	var h func() hash.Hash
 
