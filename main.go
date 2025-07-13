@@ -18,8 +18,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/70sh1/blake3"
 	"github.com/spf13/pflag"
-	"github.com/zeebo/blake3"
 	"github.com/zeebo/xxh3"
 
 	"golang.org/x/crypto/blake2b"
@@ -105,8 +105,13 @@ func main() {
 		return
 	}
 
+	var hmacKey []byte
+	if len(*key) > 0 {
+		hmacKey = []byte(*key)
+	}
+
 	if *u {
-		sum, err := unionHash(paths, *m, *key)
+		sum, err := unionHash(paths, *m, hmacKey)
 		if err != nil {
 			errout.Println(err)
 			return
@@ -125,7 +130,7 @@ func main() {
 	for i, path := range paths {
 		go func() {
 			defer wg.Done()
-			sum, err := individualHash(path, *m, *key)
+			sum, err := individualHash(path, *m, hmacKey)
 			if err != nil {
 				errout.Println(err)
 				return
@@ -150,7 +155,7 @@ func main() {
 	output.Println(result.String())
 }
 
-func individualHash(path string, m mode, key string) ([]byte, error) {
+func individualHash(path string, m mode, key []byte) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -161,7 +166,13 @@ func individualHash(path string, m mode, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if m == "blake3" {
+		h, ok := h.(*blake3.Hasher)
+		if !ok {
+			panic("")
+		}
+		return handleBlake3(h, path, key)
+	}
 	if _, err := io.Copy(h, file); err != nil {
 		return nil, err
 	}
@@ -169,7 +180,15 @@ func individualHash(path string, m mode, key string) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func unionHash(paths []string, m mode, key string) ([]byte, error) {
+func handleBlake3(h *blake3.Hasher, path string, key []byte) ([]byte, error) {
+	err := h.AddFileParallel(path, key, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
+}
+
+func unionHash(paths []string, m mode, key []byte) ([]byte, error) {
 	h, err := newHash(m, key)
 	if err != nil {
 		return nil, err
@@ -190,12 +209,7 @@ func unionHash(paths []string, m mode, key string) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-func newHash(m mode, key string) (hash.Hash, error) {
-	var hmacKey []byte
-	if len(key) > 0 {
-		hmacKey = []byte(key)
-	}
-
+func newHash(m mode, key []byte) (hash.Hash, error) {
 	var h func() hash.Hash
 
 	switch m {
@@ -221,12 +235,9 @@ func newHash(m mode, key string) (hash.Hash, error) {
 	case MD5:
 		h = md5.New
 	case BLAKE3:
-		if hmacKey != nil {
-			return blake3.NewKeyed(hmacKey)
-		}
-		return blake3.New(), nil
+		return blake3.New(32, key), nil
 	case BLAKE2B:
-		return blake2b.New(32, hmacKey)
+		return blake2b.New(32, key)
 
 	case XXH3:
 		return xxh3.New(), nil
@@ -235,8 +246,8 @@ func newHash(m mode, key string) (hash.Hash, error) {
 		return nil, fmt.Errorf("unknown mode: '%s'", m)
 	}
 
-	if hmacKey != nil {
-		return hmac.New(h, hmacKey), nil
+	if key != nil {
+		return hmac.New(h, key), nil
 	}
 	return h(), nil
 }
